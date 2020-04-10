@@ -253,13 +253,6 @@ def bb_storage_go_dependencies():
         commit = "49c01487a141b49f8ffe06277f3dca3ee80a55fa",
     )
 
-    go_repository(
-        name = "com_github_googleapis_gax_go_v2",
-        importpath = "github.com/googleapis/gax-go/v2",
-        sha256 = "3089affe6f5e27f7a6d494cb399aa6baf232384f763f548ad5ddfbea0e88e59c",
-        strip_prefix = "gax-go-2.0.5/v2",
-        urls = ["https://github.com/googleapis/gax-go/archive/v2.0.5.tar.gz"],
-    )
 
     go_repository(
         name = "com_github_mattn_go_ieproxy",

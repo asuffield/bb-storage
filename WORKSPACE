@@ -117,3 +117,5 @@ llvm_toolchain(
     name = "llvm_toolchain",
     llvm_version = "9.0.0",
 )
+
+# gazelle:repository_macro go_dependencies.bzl%bb_storage_go_dependencies
