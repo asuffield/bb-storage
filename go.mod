@@ -10,7 +10,7 @@ require (
 	github.com/Azure/azure-storage-blob-go v0.10.0
 	github.com/aws/aws-sdk-go v1.33.12
 	github.com/bazelbuild/remote-apis v0.0.0-20200708200203-1252343900d9
-	github.com/go-redis/redis v6.15.8+incompatible
+	github.com/go-redis/redis/v8 v8.0.0-beta.7 // indirect
 	github.com/golang/mock v1.4.4-0.20200406172829-6d816de489c1
 	github.com/golang/protobuf v1.4.2
 	github.com/google/go-jsonnet v0.16.0

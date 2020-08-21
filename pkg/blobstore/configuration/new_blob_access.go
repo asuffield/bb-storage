@@ -22,7 +22,7 @@ import (
 	"github.com/buildbarn/bb-storage/pkg/grpc"
 	pb "github.com/buildbarn/bb-storage/pkg/proto/configuration/blobstore"
 	"github.com/buildbarn/bb-storage/pkg/util"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/golang/protobuf/ptypes"
 
 	"gocloud.dev/blob"

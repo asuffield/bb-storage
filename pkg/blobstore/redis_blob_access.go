@@ -8,7 +8,7 @@ import (
 	"github.com/buildbarn/bb-storage/pkg/blobstore/buffer"
 	"github.com/buildbarn/bb-storage/pkg/digest"
 	"github.com/buildbarn/bb-storage/pkg/util"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 
 	"google.golang.org/grpc/codes"
 )
@@ -18,7 +18,7 @@ import (
 // and uniform switching between clustered and single-node Redis.
 type RedisClient interface {
 	redis.Cmdable
-	Process(cmd redis.Cmder) error
+	Process(ctx context.Context, cmd redis.Cmder) error
 }
 
 type redisBlobAccess struct {
@@ -52,11 +52,11 @@ func (ba *redisBlobAccess) Get(ctx context.Context, digest digest.Digest) buffer
 	key := digest.GetKey(ba.digestKeyFormat)
 
 	pipeline := ba.redisClient.Pipeline()
-	get := pipeline.Get(key)
+	get := pipeline.Get(ctx, key)
 	if ba.refreshOnUse {
-		pipeline.Expire(key, ba.keyTTL)
+		pipeline.Expire(ctx, key, ba.keyTTL)
 	}
-	pipeline.Exec()
+	pipeline.Exec(ctx)
 
 	value, err := get.Bytes()
 	if err == redis.Nil {
@@ -69,7 +69,7 @@ func (ba *redisBlobAccess) Get(ctx context.Context, digest digest.Digest) buffer
 		value,
 		func(dataIsValid bool) {
 			if !dataIsValid {
-				if err := ba.redisClient.Del(key).Err(); err == nil {
+				if err := ba.redisClient.Del(ctx, key).Err(); err == nil {
 					log.Printf("Blob %#v was malformed and has been deleted from Redis successfully", digest.String())
 				} else {
 					log.Printf("Blob %#v was malformed and could not be deleted from Redis: %s", digest.String(), err)
@@ -88,23 +88,23 @@ func (ba *redisBlobAccess) Put(ctx context.Context, digest digest.Digest, b buff
 	if err != nil {
 		return util.StatusWrapWithCode(err, codes.Unavailable, "Failed to put blob")
 	}
-	if err := ba.redisClient.Set(digest.GetKey(ba.digestKeyFormat), value, ba.keyTTL).Err(); err != nil {
+	if err := ba.redisClient.Set(ctx, digest.GetKey(ba.digestKeyFormat), value, ba.keyTTL).Err(); err != nil {
 		return util.StatusWrapWithCode(err, codes.Unavailable, "Failed to put blob")
 	}
-	return ba.waitIfReplicationEnabled()
+	return ba.waitIfReplicationEnabled(ctx)
 }
 
-func (ba *redisBlobAccess) waitIfReplicationEnabled() error {
+func (ba *redisBlobAccess) waitIfReplicationEnabled(ctx context.Context) error {
 	if ba.replicationCount == 0 {
 		return nil
 	}
 	var command *redis.IntCmd
 	if ba.replicationTimeout > 0 {
-		command = redis.NewIntCmd("wait", ba.replicationCount, ba.replicationTimeout)
+		command = redis.NewIntCmd(ctx, "wait", ba.replicationCount, ba.replicationTimeout)
 	} else {
-		command = redis.NewIntCmd("wait", ba.replicationCount)
+		command = redis.NewIntCmd(ctx, "wait", ba.replicationCount)
 	}
-	ba.redisClient.Process(command)
+	ba.redisClient.Process(ctx, command)
 	replicatedCount, err := command.Result()
 	if err != nil {
 		return util.StatusWrapWithCode(err, codes.Internal, "Error replicating blob")
@@ -128,12 +128,12 @@ func (ba *redisBlobAccess) FindMissing(ctx context.Context, digests digest.Set) 
 	cmds := make([]*redis.IntCmd, 0, digests.Length())
 	for _, digest := range digests.Items() {
 		key := digest.GetKey(ba.digestKeyFormat)
-		cmds = append(cmds, pipeline.Exists(key))
+		cmds = append(cmds, pipeline.Exists(ctx, key))
 		if ba.refreshOnUse {
-			pipeline.Expire(key, ba.keyTTL)
+			pipeline.Expire(ctx, key, ba.keyTTL)
 		}
 	}
-	if _, err := pipeline.Exec(); err != nil {
+	if _, err := pipeline.Exec(ctx); err != nil {
 		return digest.EmptySet, util.StatusWrapWithCode(err, codes.Unavailable, "Failed to find missing blobs")
 	}
 
