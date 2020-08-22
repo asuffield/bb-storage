@@ -50,6 +50,7 @@ go_library(
         "@dev_gocloud//blob/memblob:go_default_library",
         "@dev_gocloud//blob/s3blob:go_default_library",
         "@dev_gocloud//gcp:go_default_library",
+        "@io_opentelemetry_go_otel//api/global:go_default_library",
         "@org_golang_google_grpc//codes:go_default_library",
         "@org_golang_google_grpc//status:go_default_library",
         "@org_golang_x_oauth2//google:go_default_library",

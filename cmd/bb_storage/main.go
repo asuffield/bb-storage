@@ -17,6 +17,7 @@ import (
 	"github.com/buildbarn/bb-storage/pkg/proto/icas"
 	"github.com/buildbarn/bb-storage/pkg/util"
 	"github.com/gorilla/mux"
+	muxtrace "go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux"
 
 	"google.golang.org/genproto/googleapis/bytestream"
 	"google.golang.org/grpc"
@@ -169,6 +170,7 @@ func main() {
 
 	// Web server for metrics and profiling.
 	router := mux.NewRouter()
+	router.Use(muxtrace.Middleware("bb_storage"))
 	util.RegisterAdministrativeHTTPEndpoints(router)
 	log.Fatal(http.ListenAndServe(configuration.HttpListenAddress, router))
 }

@@ -6,7 +6,7 @@ import (
 	configuration "github.com/buildbarn/bb-storage/pkg/proto/configuration/grpc"
 	"github.com/buildbarn/bb-storage/pkg/util"
 	"github.com/golang/protobuf/ptypes"
-	"github.com/grpc-ecosystem/go-grpc-prometheus"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -15,7 +15,8 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/status"
 
-	"go.opencensus.io/plugin/ocgrpc"
+	grpcotel "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc"
+	"go.opentelemetry.io/otel/api/global"
 )
 
 func init() {
@@ -32,14 +33,15 @@ func (cf baseClientFactory) NewClientFromConfiguration(config *configuration.Cli
 		return nil, status.Error(codes.InvalidArgument, "No gRPC client configuration provided")
 	}
 
-	dialOptions := []grpc.DialOption{
-		grpc.WithStatsHandler(&ocgrpc.ClientHandler{}),
-	}
+	dialOptions := []grpc.DialOption{}
+	tracer := global.Tracer("github.com/buildbarn/bb-storage")
 	unaryInterceptors := []grpc.UnaryClientInterceptor{
 		grpc_prometheus.UnaryClientInterceptor,
+		grpcotel.UnaryClientInterceptor(tracer),
 	}
 	streamInterceptors := []grpc.StreamClientInterceptor{
 		grpc_prometheus.StreamClientInterceptor,
+		grpcotel.StreamClientInterceptor(tracer),
 	}
 
 	// Optional: TLS.

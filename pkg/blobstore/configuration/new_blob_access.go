@@ -26,6 +26,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/go-redis/redis/v8/redisext"
 	"github.com/golang/protobuf/ptypes"
+	"go.opentelemetry.io/otel/api/global"
 
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/azureblob"
@@ -613,5 +614,7 @@ func createCircularBlobAccess(config *pb.CircularBlobAccessConfiguration, creato
 			circular.NewBulkAllocatingStateStore(
 				stateStore,
 				config.DataAllocationChunkSizeBytes)),
-		creator.GetReadBufferFactory()), nil
+		creator.GetReadBufferFactory(),
+		global.Tracer("github.com/buildbarn/bb-storage/pkg/blobstore"),
+	), nil
 }

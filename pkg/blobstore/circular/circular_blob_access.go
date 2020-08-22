@@ -7,15 +7,18 @@ import (
 	"io/ioutil"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/buildbarn/bb-storage/pkg/blobstore"
 	"github.com/buildbarn/bb-storage/pkg/blobstore/buffer"
 	"github.com/buildbarn/bb-storage/pkg/digest"
+	"github.com/buildbarn/bb-storage/pkg/util"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"go.opencensus.io/trace"
+	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel/label"
 )
 
 // OffsetStore maps a digest to an offset within the data file. This is
@@ -46,6 +49,7 @@ type circularBlobAccess struct {
 	// Fields that are constant or lockless.
 	dataStore         DataStore
 	readBufferFactory blobstore.ReadBufferFactory
+	tracer            trace.Tracer
 
 	// Fields protected by the lock.
 	lock        sync.Mutex
@@ -56,49 +60,63 @@ type circularBlobAccess struct {
 // NewCircularBlobAccess creates a new circular storage backend. Instead
 // of writing data to storage directly, all three storage files are
 // injected through separate interfaces.
-func NewCircularBlobAccess(offsetStore OffsetStore, dataStore DataStore, stateStore StateStore, readBufferFactory blobstore.ReadBufferFactory) blobstore.BlobAccess {
+func NewCircularBlobAccess(offsetStore OffsetStore, dataStore DataStore, stateStore StateStore, readBufferFactory blobstore.ReadBufferFactory, tracer trace.Tracer) blobstore.BlobAccess {
 	return &circularBlobAccess{
 		offsetStore:       offsetStore,
 		dataStore:         dataStore,
 		stateStore:        stateStore,
 		readBufferFactory: readBufferFactory,
+		tracer:            tracer,
 	}
 }
 
 func (ba *circularBlobAccess) Get(ctx context.Context, digest digest.Digest) buffer.Buffer {
-	_, span := trace.StartSpan(ctx, "circularBlobAccess.Get")
+	ctx, span := ba.tracer.Start(ctx, "circularBlobAccess.Get",
+		trace.WithSpanKind(trace.SpanKindInternal),
+		trace.WithAttributes(
+			label.String("blobaccess.digest", digest.String()),
+		),
+	)
 	defer span.End()
 
 	ba.lock.Lock()
-	span.Annotate(nil, "Lock obtained, calling GetCursors")
+	startTime := time.Now()
 	cursors := ba.stateStore.GetCursors()
 	offset, length, ok, err := ba.offsetStore.Get(digest, cursors)
-	span.Annotate([]trace.Attribute{
-		trace.Int64Attribute("offset", int64(offset)),
-		trace.Int64Attribute("length", length),
-		trace.BoolAttribute("object_found", ok),
-	}, "offsetStore.Get completed")
+	endTime := time.Now()
 	ba.lock.Unlock()
+
+	// Add span events without the lock held.
+	span.AddEventWithTimestamp(ctx, startTime, "Lock obtained, calling GetCursors")
+	span.AddEventWithTimestamp(ctx, endTime, "offsetStore.Get completed",
+		label.Uint64("offset", offset),
+		label.Int64("length", length),
+		label.Bool("object_found", ok),
+	)
+
+	if err == nil && !ok {
+		err = status.Errorf(codes.NotFound, "Blob not found")
+	}
+	util.RecordError(ctx, err)
 	if err != nil {
 		return buffer.NewBufferFromError(err)
-	} else if ok {
-		return ba.readBufferFactory.NewBufferFromReader(
-			digest,
-			ioutil.NopCloser(ba.dataStore.Get(offset, length)),
-			func(dataIsValid bool) {
-				if !dataIsValid {
-					ba.lock.Lock()
-					err := ba.stateStore.Invalidate(offset, length)
-					defer ba.lock.Unlock()
-					if err == nil {
-						log.Printf("Blob %#v was malformed and has been deleted successfully", digest.String())
-					} else {
-						log.Printf("Blob %#v was malformed and could not be deleted: %s", digest.String(), err)
-					}
-				}
-			})
 	}
-	return buffer.NewBufferFromError(status.Errorf(codes.NotFound, "Blob not found"))
+
+	return ba.readBufferFactory.NewBufferFromReader(
+		digest,
+		ioutil.NopCloser(ba.dataStore.Get(offset, length)),
+		func(dataIsValid bool) {
+			if !dataIsValid {
+				ba.lock.Lock()
+				err := ba.stateStore.Invalidate(offset, length)
+				defer ba.lock.Unlock()
+				if err == nil {
+					log.Printf("Blob %#v was malformed and has been deleted successfully", digest.String())
+				} else {
+					log.Printf("Blob %#v was malformed and could not be deleted: %s", digest.String(), err)
+				}
+			}
+		})
 }
 
 func (ba *circularBlobAccess) Put(ctx context.Context, digest digest.Digest, b buffer.Buffer) error {
@@ -113,35 +131,58 @@ func (ba *circularBlobAccess) Put(ctx context.Context, digest digest.Digest, b b
 	r := b.ToReader()
 	defer r.Close()
 
-	_, span := trace.StartSpan(ctx, "circularBlobAccess.Put")
+	ctx, span := ba.tracer.Start(ctx, "circularBlobAccess.Put",
+		trace.WithSpanKind(trace.SpanKindInternal),
+		trace.WithAttributes(
+			label.String("blobaccess.digest", digest.String()),
+			label.Int64("size_bytes", sizeBytes),
+		),
+	)
 	defer span.End()
 
 	// Allocate space in the data store.
 	ba.lock.Lock()
-	span.Annotatef(nil, "Lock obtained, allocating %d bytes", sizeBytes)
+	startTime := time.Now()
 	offset, err := ba.stateStore.Allocate(sizeBytes)
+	endTime := time.Now()
 	ba.lock.Unlock()
+
+	span.AddEventWithTimestamp(ctx, startTime, "Lock obtained")
+	span.AddEventWithTimestamp(ctx, endTime, "stateStore.Allocate completed",
+		label.Uint64("offset", offset),
+	)
+	util.RecordError(ctx, err)
+
 	if err != nil {
 		return err
 	}
-	span.Annotatef(nil, "Store allocated, offset %d", offset)
 
 	// Write the data to storage.
 	if err := ba.dataStore.Put(r, offset); err != nil {
+		util.RecordError(ctx, err)
 		return err
 	}
 
-	span.Annotate(nil, "Obtaining lock")
+	var putTime time.Time
+
+	span.AddEvent(ctx, "Obtaining lock")
 	ba.lock.Lock()
-	span.Annotate(nil, "Lock obtained, calling GetCursors")
+	startTime = time.Now()
 	cursors := ba.stateStore.GetCursors()
 	if cursors.Contains(offset, sizeBytes) {
-		span.Annotate(nil, "Updating offsetStore")
+		putTime = time.Now()
 		err = ba.offsetStore.Put(digest, offset, sizeBytes, cursors)
 	} else {
 		err = errors.New("Data became stale before write completed")
 	}
 	ba.lock.Unlock()
+
+	span.AddEventWithTimestamp(ctx, startTime, "Lock obtained, calling GetCursors")
+	if !putTime.IsZero() {
+		span.AddEventWithTimestamp(ctx, putTime, "Updating offsetStore")
+	}
+	util.RecordError(ctx, err)
+
 	return err
 }
 
