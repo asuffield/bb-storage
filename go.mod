@@ -31,6 +31,7 @@ require (
 	go.opencensus.io v0.22.4
 	go.opentelemetry.io/contrib/detectors/aws v0.11.0
 	go.opentelemetry.io/contrib/detectors/gcp v0.11.0
+	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux v0.11.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc v0.11.0
 	go.opentelemetry.io/contrib/instrumentation/net/http v0.11.0
 	go.opentelemetry.io/otel v0.11.0

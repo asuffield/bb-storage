@@ -1100,3 +1100,15 @@ def go_dependencies():
         sum = "h1:U/zHjaVG/sECz5xhnh7kPH+Fv/maPbhZPcaTquo5sPg=",
         version = "v0.0.0-20200809085317-e36bfde3bb78",
     )
+    go_repository(
+        name = "io_opentelemetry_go_contrib_instrumentation_github_com_gorilla_mux",
+        importpath = "go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux",
+        sum = "h1:2XO53ZwlJu2orBA30KsSguXlFBmT9cYJ0fLn+gk2TXo=",
+        version = "v0.11.0",
+    )
+    go_repository(
+        name = "io_opentelemetry_go_otel_exporters_stdout",
+        importpath = "go.opentelemetry.io/otel/exporters/stdout",
+        sum = "h1:5Hn/XKgq7aCJQWGacF093Ts1VpJuiJkwC75c1PqHTPE=",
+        version = "v0.11.0",
+    )
