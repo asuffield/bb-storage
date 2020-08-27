@@ -82,10 +82,10 @@ message OpenTelemetryConfiguration {
   // Resource detectors. Labels will be merged, with earlier things in
   // this entries being preferred over later ones.
   enum ResourceDetector {
-    ENV = 0; // Use OTEL_RESOURCE_ATTRIBUTES environment variable
-    AWS = 1; // Use AWS instance metadata
-    GCE = 2; // Use GCE instance metadata
-    GKE = 3; // Use GKE API
+    ENV = 0;  // Use OTEL_RESOURCE_ATTRIBUTES environment variable
+    AWS = 1;  // Use AWS instance metadata
+    GCE = 2;  // Use GCE instance metadata
+    GKE = 3;  // Use GKE API
   }
   repeated ResourceDetector resource_detectors = 3;
 
