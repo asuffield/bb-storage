@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// PropagateOtelToOpencensus arranges for spans that let us trace into libraries using opencensus.
 func PropagateOtelToOpencensus(ctx context.Context) context.Context {
 	span := otel.SpanFromContext(ctx)
 
@@ -23,6 +24,7 @@ func PropagateOtelToOpencensus(ctx context.Context) context.Context {
 	return ctx
 }
 
+// RecordError injects an error event and status code into a trace span, if there is one.
 func RecordError(ctx context.Context, err error) {
 	if err == nil {
 		return
@@ -41,10 +43,12 @@ func (ms mapSupplier) Set(key string, value string) {
 	ms[key] = value
 }
 
+// PropagateInjectMap runs HTTP context injection into a map type.
 func PropagateInjectMap(ctx context.Context, data map[string]string) {
 	propagation.InjectHTTP(ctx, global.Propagators(), mapSupplier(data))
 }
 
+// PropagateExtractMap runs HTTP context extraction from a map type.
 func PropagateExtractMap(ctx context.Context, data map[string]string) context.Context {
 	return propagation.ExtractHTTP(ctx, global.Propagators(), mapSupplier(data))
 }
