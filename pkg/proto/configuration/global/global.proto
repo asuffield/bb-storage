@@ -83,7 +83,7 @@ message OpenTelemetryConfiguration {
   // this entries being preferred over later ones.
   enum ResourceDetector {
     FROM_ENVIRONMENT_VARIABLE =
-        0;  // Use OTEL_RESOURCE_ATTRIBUTES environment variable
+        0;    // Use OTEL_RESOURCE_ATTRIBUTES environment variable
     AWS = 1;  // Use AWS instance metadata
     GCE = 2;  // Use GCE instance metadata
     GKE = 3;  // Use GKE API
