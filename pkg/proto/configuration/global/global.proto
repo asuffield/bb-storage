@@ -120,7 +120,7 @@ message TracingConfiguration {
 
   // Fraction of traces that should be sampled. 0 will disable
   // tracing, 1 will sample all traces.
-  float sample_probability = 5;
+  double sample_probability = 5;
 
   // The intended usage is to run the opentelemetry-collector agent as
   // a sidecar, with both the opencensus and otel receivers enabled,

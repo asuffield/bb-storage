@@ -42,20 +42,17 @@ func ApplyConfiguration(configuration *pb.Configuration) error {
 			view.RegisterExporter(pe)
 		}
 
-		sampling := float64(tracingConfiguration.SampleProbability)
 		if tracingConfiguration.OpenTelemetry != nil {
-			if err := applyOtel(tracingConfiguration.OpenTelemetry, sampling); err != nil {
+			if err := applyOpenTelemetryConfiguration(tracingConfiguration.OpenTelemetry, tracingConfiguration.SampleProbability); err != nil {
 				return err
 			}
 		}
 
 		if tracingConfiguration.OpenCensus != nil {
-			if err := applyOc(tracingConfiguration.OpenCensus); err != nil {
+			if err := applyOpenCensusConfiguration(tracingConfiguration.OpenCensus, tracingConfiguration.SampleProbability); err != nil {
 				return err
 			}
 		}
-
-		octrace.ApplyConfig(octrace.Config{DefaultSampler: octrace.ProbabilitySampler(sampling)})
 	}
 
 	// Enable mutex profiling.
@@ -90,7 +87,7 @@ func ApplyConfiguration(configuration *pb.Configuration) error {
 	return nil
 }
 
-func applyOtel(config *pb.OpenTelemetryConfiguration, sampleProbability float64) error {
+func applyOpenTelemetryConfiguration(config *pb.OpenTelemetryConfiguration, sampleProbability float64) error {
 	tlsConfig, err := util.NewTLSConfigFromClientConfiguration(config.Tls)
 	if err != nil {
 		return util.StatusWrap(err, "Failed to create TLS configuration")
@@ -163,7 +160,7 @@ func applyOtel(config *pb.OpenTelemetryConfiguration, sampleProbability float64)
 	return nil
 }
 
-func applyOc(config *pb.OpenCensusConfiguration) error {
+func applyOpenCensusConfiguration(config *pb.OpenCensusConfiguration, sampling float64) error {
 	tlsConfig, err := util.NewTLSConfigFromClientConfiguration(config.Tls)
 	if err != nil {
 		return util.StatusWrap(err, "Failed to create TLS configuration")
@@ -190,6 +187,7 @@ func applyOc(config *pb.OpenCensusConfiguration) error {
 
 	view.RegisterExporter(exporter)
 	octrace.RegisterExporter(exporter)
+	octrace.ApplyConfig(octrace.Config{DefaultSampler: octrace.ProbabilitySampler(sampling)})
 
 	return nil
 }
