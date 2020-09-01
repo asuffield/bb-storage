@@ -131,10 +131,10 @@ message TracingConfiguration {
   // to configure both oc and otel, because not all libraries have
   // migrated to OpenTelemtry yet. A sufficient minimal configuration is:
   //
-  // oc: {
-  //   serviceName = "buildbarn",
+  // openCensus: {
+  //   serviceName: "buildbarn",
   // },
-  // otel: {
+  // openTelemetry: {
   //   resourceDetectors: ['ENV'],
   // },
   //
@@ -142,10 +142,10 @@ message TracingConfiguration {
   // 'service.name=buildbarn'.
 
   // Export data to an OpenCensus agent.
-  OpenCensusConfiguration oc = 6;
+  OpenCensusConfiguration open_census = 6;
 
   // Export data to an OpenTelemetry collector.
-  OpenTelemetryConfiguration otel = 7;
+  OpenTelemetryConfiguration open_telemetry = 7;
 }
 
 message Configuration {

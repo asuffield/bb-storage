@@ -43,19 +43,19 @@ func ApplyConfiguration(configuration *pb.Configuration) error {
 		}
 
 		sampling := float64(tracingConfiguration.SampleProbability)
-		if otelConfiguration := tracingConfiguration.GetOtel(); otelConfiguration != nil {
-			if err := applyOtel(otelConfiguration, sampling); err != nil {
+		if tracingConfiguration.OpenTelemetry != nil {
+			if err := applyOtel(tracingConfiguration.OpenTelemetry, sampling); err != nil {
 				return err
 			}
 		}
 
-		if ocConfiguration := tracingConfiguration.GetOc(); ocConfiguration != nil {
-			if err := applyOc(ocConfiguration); err != nil {
+		if tracingConfiguration.OpenCensus != nil {
+			if err := applyOc(tracingConfiguration.OpenCensus); err != nil {
 				return err
 			}
 		}
 
-		octrace.ApplyConfig(octrace.Config{DefaultSampler: octrace.ProbabilitySampler(float64(tracingConfiguration.SampleProbability))})
+		octrace.ApplyConfig(octrace.Config{DefaultSampler: octrace.ProbabilitySampler(sampling)})
 	}
 
 	// Enable mutex profiling.

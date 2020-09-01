@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// PropagateOtelToOpencensus arranges for spans that let us trace into libraries using opencensus.
-func PropagateOtelToOpencensus(ctx context.Context) context.Context {
+// PropagateOpenTelemetryToOpenCensus arranges for spans that let us trace into libraries using opencensus.
+func PropagateOpenTelemetryToOpenCensus(ctx context.Context) context.Context {
 	span := otel.SpanFromContext(ctx)
 
 	// In oc we have to create a new span immediately, which replaces any lingering otel span

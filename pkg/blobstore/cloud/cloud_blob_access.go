@@ -38,7 +38,7 @@ func NewCloudBlobAccess(bucket *blob.Bucket, keyPrefix string, readBufferFactory
 
 func (ba *cloudBlobAccess) Get(ctx context.Context, digest digest.Digest) buffer.Buffer {
 	key := ba.getKey(digest)
-	ctx = util.PropagateOtelToOpencensus(ctx)
+	ctx = util.PropagateOpenTelemetryToOpenCensus(ctx)
 	result, err := ba.bucket.NewReader(ctx, key, nil)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
@@ -73,7 +73,7 @@ func (ba *cloudBlobAccess) Get(ctx context.Context, digest digest.Digest) buffer
 
 func (ba *cloudBlobAccess) Put(ctx context.Context, digest digest.Digest, b buffer.Buffer) error {
 	ctx, cancel := context.WithCancel(ctx)
-	ctx = util.PropagateOtelToOpencensus(ctx)
+	ctx = util.PropagateOpenTelemetryToOpenCensus(ctx)
 	w, err := ba.bucket.NewWriter(ctx, ba.getKey(digest), nil)
 	if err != nil {
 		cancel()
@@ -94,7 +94,7 @@ func (ba *cloudBlobAccess) Put(ctx context.Context, digest digest.Digest, b buff
 
 func (ba *cloudBlobAccess) FindMissing(ctx context.Context, digests digest.Set) (digest.Set, error) {
 	missing := digest.NewSetBuilder()
-	ctx = util.PropagateOtelToOpencensus(ctx)
+	ctx = util.PropagateOpenTelemetryToOpenCensus(ctx)
 
 	for _, blobDigest := range digests.Items() {
 		key := ba.getKey(blobDigest)
