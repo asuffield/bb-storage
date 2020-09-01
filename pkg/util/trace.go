@@ -43,12 +43,14 @@ func (ms mapSupplier) Set(key string, value string) {
 	ms[key] = value
 }
 
-// PropagateInjectMap runs HTTP context injection into a map type.
-func PropagateInjectMap(ctx context.Context, data map[string]string) {
+// PropagateContextToW3CTraceContext runs HTTP context injection into a map type.
+func PropagateContextToW3CTraceContext(ctx context.Context) map[string]string {
+	data := map[string]string{}
 	propagation.InjectHTTP(ctx, global.Propagators(), mapSupplier(data))
+	return data
 }
 
-// PropagateExtractMap runs HTTP context extraction from a map type.
-func PropagateExtractMap(ctx context.Context, data map[string]string) context.Context {
+// PropagateW3CTraceContextToContext runs HTTP context extraction from a map type.
+func PropagateW3CTraceContextToContext(ctx context.Context, data map[string]string) context.Context {
 	return propagation.ExtractHTTP(ctx, global.Propagators(), mapSupplier(data))
 }
