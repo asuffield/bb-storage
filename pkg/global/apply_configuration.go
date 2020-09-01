@@ -113,7 +113,7 @@ func applyOpenTelemetryConfiguration(config *pb.OpenTelemetryConfiguration, samp
 	var detectors []sdkresource.Detector
 	for _, detectorConfig := range config.ResourceDetectors {
 		switch detectorConfig {
-		case pb.OpenTelemetryConfiguration_ENV:
+		case pb.OpenTelemetryConfiguration_FROM_ENVIRONMENT_VARIABLE:
 			detectors = append(detectors, &sdkresource.FromEnv{})
 		case pb.OpenTelemetryConfiguration_AWS:
 			detectors = append(detectors, &detectaws.AWS{})

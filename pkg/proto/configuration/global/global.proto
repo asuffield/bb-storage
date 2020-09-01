@@ -82,7 +82,7 @@ message OpenTelemetryConfiguration {
   // Resource detectors. Labels will be merged, with earlier things in
   // this entries being preferred over later ones.
   enum ResourceDetector {
-    ENV = 0;  // Use OTEL_RESOURCE_ATTRIBUTES environment variable
+    FROM_ENVIRONMENT_VARIABLE = 0;  // Use OTEL_RESOURCE_ATTRIBUTES environment variable
     AWS = 1;  // Use AWS instance metadata
     GCE = 2;  // Use GCE instance metadata
     GKE = 3;  // Use GKE API
@@ -135,7 +135,7 @@ message TracingConfiguration {
   //   serviceName: "buildbarn",
   // },
   // openTelemetry: {
-  //   resourceDetectors: ['ENV'],
+  //   resourceDetectors: ['FROM_ENVIRONMENT_VARIABLE'],
   // },
   //
   // And set the environment variable OTEL_RESOURCE_ATTRIBUTES to
