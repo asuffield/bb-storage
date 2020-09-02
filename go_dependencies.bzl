@@ -992,11 +992,12 @@ def go_dependencies():
     go_repository(
         name = "com_github_go_redis_redis_v8",
         importpath = "github.com/go-redis/redis/v8",
-        sum = "h1:zoCuzcK6zAUsExPMQH/b/8gWGbHSeXYilcSZN7z6jBQ=",
-        version = "v8.0.0-beta.8",
+        sum = "h1:gcRNXZvs4PFi/mptho1D3hXant8JsbQKQxQ+0W3QGPw=",
+        version = "v8.0.0-beta.9",
     )
     go_repository(
         name = "io_opentelemetry_go_otel",
+        build_extra_args = ["--exclude=Makefile.proto"],
         importpath = "go.opentelemetry.io/otel",
         sum = "h1:IN2tzQa9Gc4ZVKnTaMbPVcHjvzOdg5n9QfnmlqiET7E=",
         version = "v0.11.0",
@@ -1067,12 +1068,7 @@ def go_dependencies():
         sum = "h1:qGgC0jWy5+25GkUowWvNbdTvlD6xGJdH8NQWmr6yzbA=",
         version = "v0.11.0",
     )
-    go_repository(
-        name = "io_opentelemetry_go_contrib_instrumentation_github_com_gorilla_mux",
-        importpath = "go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux",
-        sum = "h1:2XO53ZwlJu2orBA30KsSguXlFBmT9cYJ0fLn+gk2TXo=",
-        version = "v0.11.0",
-    )
+
     go_repository(
         name = "io_opentelemetry_go_contrib_instrumentation_google_golang_org_grpc",
         importpath = "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc",
@@ -1091,12 +1087,7 @@ def go_dependencies():
         sum = "h1:lNOQd4CG+6ESHBzCZPAa+vX9HUS0hsWISM7rMAe568Q=",
         version = "v0.11.0",
     )
-    go_repository(
-        name = "io_opentelemetry_go_otel_exporters_stdout",
-        importpath = "go.opentelemetry.io/otel/exporters/stdout",
-        sum = "h1:5Hn/XKgq7aCJQWGacF093Ts1VpJuiJkwC75c1PqHTPE=",
-        version = "v0.11.0",
-    )
+
     go_repository(
         name = "io_opentelemetry_go_otel_sdk",
         importpath = "go.opentelemetry.io/otel/sdk",

@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go v1.34.9
 	github.com/bazelbuild/remote-apis v0.0.0-20200708200203-1252343900d9
 	github.com/benbjohnson/clock v1.0.3 // indirect
-	github.com/go-redis/redis/v8 v8.0.0-beta.8
+	github.com/go-redis/redis/v8 v8.0.0-beta.9
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.2
 	github.com/google/go-jsonnet v0.16.0
@@ -31,7 +31,6 @@ require (
 	go.opencensus.io v0.22.4
 	go.opentelemetry.io/contrib/detectors/aws v0.11.0
 	go.opentelemetry.io/contrib/detectors/gcp v0.11.0
-	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux v0.11.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc v0.11.0
 	go.opentelemetry.io/contrib/instrumentation/net/http v0.11.0
 	go.opentelemetry.io/otel v0.11.0
